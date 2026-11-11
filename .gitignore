@@ -1,0 +1,15 @@
+__pycache__/
+*.egg-info/
+build/
+dist/
+.venv/
+.promptlab/
+projem/
+my-project/
+*.csv
+rapor.html
+report.html
+.env
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promptlab"
+version = "0.4.0"
+description = "Compare prompt versions and local models on your own test cases, with auto-checks and a local web UI. Free with Ollama."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "0mhmmdyldz0" }]
+keywords = ["prompt", "llm", "ollama", "testing", "anthropic"]
+dependencies = []
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40"]
+
+[project.urls]
+Homepage = "https://github.com/0mhmmdyldz0/promptlab"
+Issues = "https://github.com/0mhmmdyldz0/promptlab/issues"
+
+[project.scripts]
+promptlab = "promptlab.cli:main"
+
+[tool.setuptools]
+packages = ["promptlab"]
+
+[tool.setuptools.package-data]
+promptlab = ["ui.html"]

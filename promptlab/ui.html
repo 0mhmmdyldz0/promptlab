@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>promptlab</title>
+<style>
+:root{--bg:#f5f6f8;--panel:#fff;--text:#1b1e25;--muted:#697180;--line:#e1e4ea;--accent:#4f46e5;--accent-t:#fff;--ok:#0f7b3a;--okbg:#dcf5e5;--bad:#b42318;--badbg:#fde4e1;--warn:#8a5a0a;--warnbg:#fdf1d6;--code:#f0f2f5;--gold:#f5b50a}
+@media (prefers-color-scheme:dark){:root{--bg:#121418;--panel:#1b1e24;--text:#e8eaee;--muted:#98a0ad;--line:#2d323b;--accent:#8b93ff;--accent-t:#11131a;--ok:#6ee7a0;--okbg:#12301f;--bad:#fca5a5;--badbg:#3a1a1a;--warn:#fcd34d;--warnbg:#3a2e12;--code:#252932}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-size:18px;font-weight:600;letter-spacing:-.3px}.brand b{color:var(--accent)}
+nav{display:flex;gap:4px}
+nav button{border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:8px;font:inherit;cursor:pointer}
+nav button.on{background:var(--code);color:var(--text);font-weight:600}
+.spacer{flex:1}
+.pill{font-size:12px;padding:2px 10px;border-radius:99px;background:var(--code);color:var(--muted)}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
+.dim{color:var(--muted);font-size:12px}
+main{max-width:1200px;margin:0 auto;padding:20px}
+section{margin-bottom:28px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+h2{font-size:15px;margin:0}
+.btn,.run{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.run{background:var(--accent);color:var(--accent-t);border-color:var(--accent);font-weight:600;padding:7px 18px}
+.run.stop{background:var(--bad);border-color:var(--bad);color:#fff}
+.run:disabled{opacity:.5;cursor:default}
+.link{border:0;background:none;color:var(--accent);font:inherit;cursor:pointer;padding:2px 4px}
+.link.danger{color:var(--bad)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.card.off{opacity:.55}
+.card+.card.case{margin-top:10px}
+.card-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.card-actions{display:flex;gap:6px;margin-top:6px}
+input[type=text],input[type=number],textarea,select{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+textarea{resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.name{font-weight:600}
+.chk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap}
+.vars{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.var{display:inline-block;font:12px ui-monospace,Consolas,monospace;color:var(--accent);margin-bottom:2px}
+.checks{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.checks .lbl{font-weight:600;font-size:12px;color:var(--muted);align-self:center}
+.fld{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px;min-width:90px}
+.fld.grow{flex:1;min-width:180px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.settings .wide{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;cursor:pointer;color:var(--text);font-size:13px}
+.chip.on{border-color:var(--accent);background:var(--code)}
+details summary{cursor:pointer;color:var(--accent);font-size:13px}
+details .stack{display:grid;gap:10px;margin-top:10px}
+.hint{font-size:13px;color:var(--muted)}.hint.warn{color:var(--warn);background:var(--warnbg);padding:6px 10px;border-radius:8px}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty h2{font-size:18px;color:var(--text);margin-bottom:6px}
+.empty .btn{margin:8px 4px}
+/* results */
+.progress{height:6px;background:var(--code);border-radius:99px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.sums{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:16px}
+.sum{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.sum.best{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.sum h3{margin:0 0 6px;font-size:13px;word-break:break-word}
+.sum dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;font-size:12px}
+.sum dt{color:var(--muted)}.sum dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.tools a{color:var(--accent);text-decoration:none;font-size:13px}
+.wrap{overflow-x:auto}
+table.grid{border-collapse:separate;border-spacing:0;width:100%;min-width:640px}
+.grid th,.grid td{border-bottom:1px solid var(--line);padding:10px;vertical-align:top;text-align:left;background:var(--panel)}
+.grid thead th{position:sticky;top:0;font-size:13px;background:var(--code)}
+.grid th.row{width:140px;font-size:13px;word-break:break-word}
+.grid td.win{background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.grid td.pending{color:var(--muted)}
+.out+.out{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.out pre{margin:4px 0 0;white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.45;max-height:340px;overflow:auto}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px;background:var(--code);color:var(--text)}
+.badge.pass{background:var(--okbg);color:var(--ok)}.badge.fail,.badge.error{background:var(--badbg);color:var(--bad)}
+.why{font-size:12px;color:var(--bad);margin-top:2px}
+.vote{margin-top:10px;font:inherit;font-size:12px;border:1px solid var(--line);background:none;color:var(--muted);border-radius:99px;padding:2px 10px;cursor:pointer}
+.vote:hover:not(:disabled){border-color:var(--gold);color:var(--text)}
+.vote.on{background:var(--gold);border-color:var(--gold);color:#222;font-weight:600}
+.vote:disabled{opacity:.4;cursor:default}
+table.hist{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hist td,.hist th{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:80vw;z-index:10}
+#toast.show{opacity:1}#toast.err{background:var(--bad);color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">prompt<b>lab</b></div>
+  <nav>
+    <button id="tb-edit" data-tab="edit"></button>
+    <button id="tb-results" data-tab="results"></button>
+    <button id="tb-history" data-tab="history"></button>
+  </nav>
+  <span id="status" class="pill"></span>
+  <span id="savestate" class="dim"></span>
+  <div class="spacer"></div>
+  <button id="lang" class="link"></button>
+  <div id="runwrap"></div>
+</header>
+<main>
+  <div id="tab-edit"></div>
+  <div id="tab-results" hidden></div>
+  <div id="tab-history" hidden></div>
+</main>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- tiny helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const c of kids.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "value" || k === "checked" || k === "disabled") e[k] = v;
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  return e;
+}
+let toastTimer;
+function toast(msg, err) {
+  const el = $("#toast");
+  el.textContent = msg; el.className = "show" + (err ? " err" : "");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.className = "", err ? 6000 : 2500);
+}
+
+/* ---------- translations ---------- */
+const I18N = {
+  en: {
+    edit: "Prompts & tests", results: "Results", history: "History", run: "Run", stop: "Stop", running: "Running",
+    prompts: "Prompts", newPrompt: "New prompt", dup: "Duplicate", del: "Delete", include: "Include",
+    cases: "Test cases", newCase: "New case", noVars: "Add {{variable}} placeholders to your prompts, e.g. {{text}}, and a field for each appears here.",
+    checks: "Auto-checks", maxWords: "Max words", minWords: "Min words", mustContain: "Must contain", mustNotContain: "Must not contain",
+    regexLbl: "Regex", commaHint: "comma separated", anyOf: "At least one of", jsonKeys: "JSON keys", maxSentences: "Max sentences", stability: "Stability", bestHint: "Recommended",
+    settings: "Run settings", provider: "Provider", models: "Models (pick several to compare them)", temperature: "Temperature",
+    repeat: "Repeat each", maxTokens: "Max tokens", advanced: "Advanced", system: "System prompt (optional)",
+    judge: "Let the model rate each output 1-5 (criteria, e.g. 'friendly and accurate')", auto: "default",
+    ollamaOk: "Ollama", ollamaDown: "Ollama not reachable. Install and start it from ollama.com", noModels: "No models installed. Run: ollama pull qwen2.5:3b",
+    emptyTitle: "Let's start", emptyText: "Create an example project, then change the prompts and test cases to your own.", loadEn: "Load English example", loadTr: "Load Turkish example",
+    noRun: "No results yet. Press Run.", best: "Best", summary: "Summary", passRate: "Checks passed", wins: "Your picks", avgTime: "Avg time",
+    avgWords: "Avg words", tokens: "Tokens", errors: "Errors", score: "Model score", words: "words", input: "Input",
+    needPrompt: "Select at least one prompt.", needCase: "Add at least one test case.", needModel: "Select a model first.",
+    badName: "That name is empty, invalid or already used.", confirmDel: "Delete this?", noHistory: "No saved runs yet.", open: "Open",
+    saving: "saving…", saved: "saved ✓", saveErr: "not saved!", partial: "stopped early", pickHint: "Click \u201cBest\u201d on the output you like most to keep score.",
+    date: "Date", count: "Results", variants: "Versions"
+  },
+  tr: {
+    edit: "Prompt ve testler", results: "Sonuçlar", history: "Geçmiş", run: "Çalıştır", stop: "Durdur", running: "Çalışıyor",
+    prompts: "Prompt'lar", newPrompt: "Yeni prompt", dup: "Kopyala", del: "Sil", include: "Dahil et",
+    cases: "Test durumları", newCase: "Yeni durum", noVars: "Prompt'larına {{degisken}} yer tutucuları ekle (ör. {{text}}); her biri için burada bir alan çıkar.",
+    checks: "Otomatik kontroller", maxWords: "En fazla kelime", minWords: "En az kelime", mustContain: "İçermeli", mustNotContain: "İçermemeli",
+    regexLbl: "Regex", commaHint: "virgülle ayır", anyOf: "Biri olmalı", jsonKeys: "JSON anahtarları", maxSentences: "En fazla cümle", stability: "Tutarlılık", bestHint: "Önerilen",
+    settings: "Çalıştırma ayarları", provider: "Sağlayıcı", models: "Modeller (karşılaştırmak için birkaç tane seç)", temperature: "Sıcaklık",
+    repeat: "Her birini tekrarla", maxTokens: "En çok token", advanced: "Gelişmiş", system: "Sistem prompt'u (isteğe bağlı)",
+    judge: "Model her çıktıyı 1-5 puanlasın (ölçüt, ör. 'samimi ve doğru')", auto: "varsayılan",
+    ollamaOk: "Ollama", ollamaDown: "Ollama'ya ulaşılamıyor. ollama.com'dan kurup başlat", noModels: "Hiç model yok. Çalıştır: ollama pull qwen2.5:3b",
+    emptyTitle: "Başlayalım", emptyText: "Bir örnek proje oluştur, sonra prompt'ları ve testleri kendine göre değiştir.", loadEn: "İngilizce örnek yükle", loadTr: "Türkçe örnek yükle",
+    noRun: "Henüz sonuç yok. Çalıştır'a bas.", best: "En iyi", summary: "Özet", passRate: "Geçen kontrol", wins: "Seçimlerin", avgTime: "Ort. süre",
+    avgWords: "Ort. kelime", tokens: "Token", errors: "Hata", score: "Model puanı", words: "kelime", input: "Girdi",
+    needPrompt: "En az bir prompt seç.", needCase: "En az bir test durumu ekle.", needModel: "Önce bir model seç.",
+    badName: "Bu isim boş, geçersiz ya da zaten kullanılıyor.", confirmDel: "Silinsin mi?", noHistory: "Henüz kayıtlı çalıştırma yok.", open: "Aç",
+    saving: "kaydediliyor…", saved: "kaydedildi ✓", saveErr: "kaydedilemedi!", partial: "erken durduruldu", pickHint: "En beğendiğin çıktıda \u201cEn iyi\u201de tıkla; puanın tutulur.",
+    date: "Tarih", count: "Sonuç", variants: "Sürümler"
+  }
+};
+let lang = "en";
+try { lang = localStorage.getItem("pl-lang") || ((navigator.language || "en").toLowerCase().startsWith("tr") ? "tr" : "en"); } catch (e) {}
+const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+
+/* ---------- state ---------- */
+const S = {
+  status: null, prompts: [], inputs: [], tab: "edit", R: null, plan: null, running: false, runs: [], ctrl: null,
+  cfg: { provider: "auto", models: [], temperature: "", repeat: 1, max_tokens: 512, judge: "", system: "", off: [] }
+};
+function loadCfg() { try { Object.assign(S.cfg, JSON.parse(localStorage.getItem("pl-cfg") || "{}")); } catch (e) {} }
+function saveCfg() { try { localStorage.setItem("pl-cfg", JSON.stringify(S.cfg)); } catch (e) {} }
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    method: opts.method || "GET", headers: { "Content-Type": "application/json" },
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) {
+    let m = res.statusText;
+    try { m = (await res.json()).error || m; } catch (e) {}
+    throw new Error(m);
+  }
+  return res;
+}
+const getJSON = async p => (await api(p)).json();
+
+/* ---------- saving the project ---------- */
+let saveTimer = null;
+function setSaveState(s) { $("#savestate").textContent = s === "ok" ? t("saved") : s === "err" ? t("saveErr") : t("saving"); }
+function scheduleSave() { clearTimeout(saveTimer); setSaveState("..."); saveTimer = setTimeout(saveNow, 500); }
+function cleanCase(c, i) {
+  const checks = {};
+  for (const [k, v] of Object.entries(c.checks || {})) {
+    if (v === "" || v == null || (Array.isArray(v) && !v.length)) continue;
+    checks[k] = v;
+  }
+  return { name: c.name || ("case-" + (i + 1)), vars: c.vars || {}, checks };
+}
+async function saveNow() {
+  clearTimeout(saveTimer);
+  const body = { prompts: S.prompts.map(p => ({ name: p.name, text: p.text })), inputs: S.inputs.map(cleanCase) };
+  try { await api("/api/project", { method: "PUT", body }); setSaveState("ok"); }
+  catch (e) { setSaveState("err"); toast(e.message, true); }
+}
+
+/* ---------- header ---------- */
+function applyLang() {
+  document.documentElement.lang = lang;
+  $("#tb-edit").textContent = t("edit"); $("#tb-results").textContent = t("results"); $("#tb-history").textContent = t("history");
+  $("#lang").textContent = lang === "tr" ? "English" : "Türkçe";
+}
+function renderStatus() {
+  const st = S.status, el = $("#status");
+  if (!st) return;
+  el.className = "pill " + (st.ollama.ok ? "ok" : "bad");
+  el.textContent = st.ollama.ok ? `${t("ollamaOk")} ✓ ${st.ollama.models.length}` : `${t("ollamaOk")} ✗`;
+  el.title = st.ollama.ok ? st.ollama.models.join(", ") : (st.ollama.error || "");
+}
+function renderRunButton() {
+  const w = $("#runwrap"); w.replaceChildren();
+  if (S.running) w.append(h("button", { class: "run stop", onclick: () => S.ctrl && S.ctrl.abort() }, "■ " + t("stop")));
+  else w.append(h("button", { class: "run", onclick: run, title: "Ctrl+Enter" }, "▶ " + t("run")));
+}
+function setTab(name) {
+  S.tab = name;
+  for (const n of ["edit", "results", "history"]) {
+    $("#tab-" + n).hidden = n !== name;
+    $("#tb-" + n).classList.toggle("on", n === name);
+  }
+  if (name === "history") loadRuns();
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+$("#lang").addEventListener("click", () => {
+  lang = lang === "tr" ? "en" : "tr";
+  try { localStorage.setItem("pl-lang", lang); } catch (e) {}
+  renderAll();
+});
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); } });
+
+/* ---------- edit tab ---------- */
+const VAR_RE = /\{\{\s*([\p{L}\p{N}_]+)\s*\}\}/gu;
+function detectVars() {
+  const out = [];
+  for (const p of S.prompts) {
+    if (S.cfg.off.includes(p.name)) continue;
+    for (const m of p.text.matchAll(VAR_RE)) if (!out.includes(m[1])) out.push(m[1]);
+  }
+  return out;
+}
+function cleanName(v) { return v.replace(/[^\p{L}\p{N}_\-. ]/gu, "-").trim().replace(/^\.+|\.+$/g, "").slice(0, 60); }
+function nextName(name) {
+  const m = name.match(/^(.*?)(\d+)$/);
+  let base = m ? m[1] : name + "-", n = m ? parseInt(m[2], 10) + 1 : 2;
+  while (S.prompts.some(p => p.name.toLowerCase() === (base + n).toLowerCase())) n++;
+  return base + n;
+}
+function renderEdit() {
+  const root = $("#tab-edit"); root.replaceChildren();
+  if (!S.prompts.length && !S.inputs.length) { root.append(emptyState()); return; }
+  root.append(h("section", { id: "sec-prompts" }), h("section", { id: "sec-cases" }), h("section", { id: "sec-settings" }));
+  renderPrompts(); renderCases(); renderSettings();
+}
+function emptyState() {
+  const load = async l => { try { await api("/api/init", { method: "POST", body: { lang: l } }); await loadProject(); renderEdit(); } catch (e) { toast(e.message, true); } };
+  return h("div", { class: "empty" }, h("h2", {}, t("emptyTitle")), h("p", {}, t("emptyText")),
+    h("button", { class: "btn", onclick: () => load("tr") }, t("loadTr")), h("button", { class: "btn", onclick: () => load("en") }, t("loadEn")),
+    h("div", {}, h("button", { class: "link", onclick: () => { S.prompts.push({ name: "v1", text: "{{text}}\n" }); S.inputs.push({ name: "case-1", vars: {}, checks: {} }); scheduleSave(); renderEdit(); } }, "+ " + t("newPrompt"))));
+}
+function renderPrompts() {
+  const sec = $("#sec-prompts"); if (!sec) return; sec.replaceChildren();
+  sec.append(h("div", { class: "sec-head" }, h("h2", {}, t("prompts")), h("button", { class: "btn", onclick: addPrompt }, "+ " + t("newPrompt"))));
+  const grid = h("div", { class: "cards" });
+  S.prompts.forEach((p, i) => {
+    const used = !S.cfg.off.includes(p.name);
+    grid.append(h("div", { class: "card" + (used ? "" : " off") },
+      h("div", { class: "card-top" },
+        h("input", { type: "text", class: "name", value: p.name, onchange: e => renamePrompt(i, e.target.value) }),
+        h("label", { class: "chk" }, h("input", { type: "checkbox", checked: used, onchange: e => toggleUse(p.name, e.target.checked) }), t("include"))),
+      h("textarea", { rows: 8, spellcheck: "false", value: p.text, oninput: e => { p.text = e.target.value; scheduleSave(); scheduleCases(); } }),
+      h("div", { class: "card-actions" },
+        h("button", { class: "link", onclick: () => dupPrompt(i) }, t("dup")),
+        h("button", { class: "link danger", onclick: () => delPrompt(i) }, t("del")))));
+  });
+  sec.append(grid);
+}
+let casesTimer;
+function scheduleCases() { clearTimeout(casesTimer); casesTimer = setTimeout(renderCases, 600); }
+function toggleUse(name, on) {
+  S.cfg.off = S.cfg.off.filter(n => n !== name);
+  if (!on) S.cfg.off.push(name);
+  saveCfg(); renderPrompts(); renderCases();
+}
+function addPrompt() {
+  const name = nextName(S.prompts.length ? S.prompts[S.prompts.length - 1].name : "v0");
+  S.prompts.push({ name, text: "{{" + (detectVars()[0] || "text") + "}}\n" });
+  renderPrompts(); renderCases(); scheduleSave();
+}
+function dupPrompt(i) {
+  const name = nextName(S.prompts[i].name);
+  S.prompts.splice(i + 1, 0, { name, text: S.prompts[i].text });
+  renderPrompts(); scheduleSave();
+}
+function delPrompt(i) {
+  if (!confirm(t("confirmDel"))) return;
+  S.prompts.splice(i, 1); renderPrompts(); renderCases(); scheduleSave();
+}
+function renamePrompt(i, v) {
+  const old = S.prompts[i].name, nn = cleanName(v);
+  if (!nn || S.prompts.some((p, j) => j !== i && p.name.toLowerCase() === nn.toLowerCase())) { toast(t("badName"), true); renderPrompts(); return; }
+  S.prompts[i].name = nn;
+  S.cfg.off = S.cfg.off.map(n => n === old ? nn : n); saveCfg();
+  renderPrompts(); scheduleSave();
+}
+
+const listVal = x => Array.isArray(x) ? x.join(", ") : (x || "");
+function renderCases() {
+  const sec = $("#sec-cases"); if (!sec) return; sec.replaceChildren();
+  const vars = detectVars();
+  sec.append(h("div", { class: "sec-head" }, h("h2", {}, t("cases")), h("button", { class: "btn", onclick: addCase }, "+ " + t("newCase"))));
+  if (!vars.length) sec.append(h("p", { class: "hint warn" }, t("noVars")));
+  S.inputs.forEach((c, i) => {
+    c.vars = c.vars || {}; c.checks = c.checks || {};
+    const chk = c.checks;
+    const num = (key, label) => h("label", { class: "fld" }, label,
+      h("input", { type: "number", min: "1", value: chk[key] != null ? chk[key] : "", oninput: e => { const v = parseInt(e.target.value, 10); if (v > 0) chk[key] = v; else delete chk[key]; scheduleSave(); } }));
+    const list = (key, label) => h("label", { class: "fld grow" }, label,
+      h("input", { type: "text", placeholder: t("commaHint"), value: listVal(chk[key]), oninput: e => { const a = e.target.value.split(",").map(x => x.trim()).filter(Boolean); if (a.length) chk[key] = a; else delete chk[key]; scheduleSave(); } }));
+    const str = (key, label) => h("label", { class: "fld grow" }, label,
+      h("input", { type: "text", value: listVal(chk[key]), oninput: e => { if (e.target.value.trim()) chk[key] = e.target.value.trim(); else delete chk[key]; scheduleSave(); } }));
+    sec.append(h("div", { class: "card case" },
+      h("div", { class: "card-top" },
+        h("input", { type: "text", class: "name", value: c.name, oninput: e => { c.name = e.target.value; scheduleSave(); } }),
+        h("button", { class: "link danger", onclick: () => { if (confirm(t("confirmDel"))) { S.inputs.splice(i, 1); renderCases(); scheduleSave(); } } }, t("del"))),
+      h("div", { class: "vars" }, vars.map(v => h("label", { class: "fld" }, h("span", { class: "var" }, "{{" + v + "}}"),
+        h("textarea", { rows: 3, value: c.vars[v] != null ? c.vars[v] : "", oninput: e => { c.vars[v] = e.target.value; scheduleSave(); } })))),
+      h("div", { class: "checks" }, h("span", { class: "lbl" }, t("checks")),
+        num("max_words", t("maxWords")), num("min_words", t("minWords")),
+        list("contains", t("mustContain")), list("not_contains", t("mustNotContain")), str("regex", t("regexLbl")),
+        list("any_of", t("anyOf")), list("json_keys", t("jsonKeys")), num("max_sentences", t("maxSentences")))));
+  });
+}
+function addCase() { S.inputs.push({ name: "case-" + (S.inputs.length + 1), vars: {}, checks: {} }); renderCases(); scheduleSave(); }
+
+function provNow() { return S.cfg.provider === "auto" ? S.status.auto_provider : S.cfg.provider; }
+function ensureModels() {
+  const c = S.cfg, st = S.status;
+  if (provNow() === "ollama") {
+    const inst = st.ollama.models;
+    c.models = c.models.filter(m => inst.includes(m));
+    if (!c.models.length && inst.length) c.models = [inst.includes(st.default_models.ollama) ? st.default_models.ollama : inst[0]];
+  } else if (!c.models.length) c.models = [st.default_models.anthropic];
+  saveCfg();
+}
+function renderSettings() {
+  const sec = $("#sec-settings"); if (!sec) return; sec.replaceChildren();
+  const c = S.cfg, st = S.status, local = provNow() === "ollama";
+  const field = (label, input, cls) => h("label", { class: "fld " + (cls || "") }, label, input);
+  const provSel = h("select", { value: c.provider, onchange: e => { c.provider = e.target.value; c.models = []; ensureModels(); renderSettings(); } },
+    h("option", { value: "auto" }, "auto (" + st.auto_provider + ")"), h("option", { value: "ollama" }, "ollama (local)"), h("option", { value: "anthropic" }, "anthropic"));
+  provSel.value = c.provider;
+  const modelsUI = local
+    ? (st.ollama.models.length
+      ? h("div", { class: "chips" }, st.ollama.models.map(m => h("label", { class: "chip" + (c.models.includes(m) ? " on" : "") },
+        h("input", { type: "checkbox", checked: c.models.includes(m), onchange: e => { c.models = c.models.filter(x => x !== m); if (e.target.checked) c.models.push(m); saveCfg(); renderSettings(); } }), m)))
+      : h("span", { class: "hint warn" }, st.ollama.ok ? t("noModels") : t("ollamaDown")))
+    : h("input", { type: "text", value: c.models.join(", "), placeholder: st.default_models.anthropic, onchange: e => { c.models = e.target.value.split(",").map(x => x.trim()).filter(Boolean); saveCfg(); } });
+  const numIn = (key, attrs) => h("input", Object.assign({ type: "number", value: c[key], onchange: e => { c[key] = e.target.value; saveCfg(); } }, attrs));
+  sec.append(h("div", { class: "sec-head" }, h("h2", {}, t("settings"))),
+    h("div", { class: "card settings" },
+      field(t("provider"), provSel),
+      field(t("temperature"), numIn("temperature", { step: "0.1", min: "0", max: "2", placeholder: t("auto") })),
+      field(t("repeat"), numIn("repeat", { min: "1", max: "20" })),
+      field(t("maxTokens"), numIn("max_tokens", { min: "16", max: "8192" })),
+      h("div", { class: "fld wide" }, h("span", {}, t("models")), modelsUI),
+      h("details", { class: "wide" }, h("summary", {}, t("advanced")),
+        h("div", { class: "stack" },
+          field(t("system"), h("textarea", { rows: 3, value: c.system, onchange: e => { c.system = e.target.value; saveCfg(); } })),
+          field(t("judge"), h("textarea", { rows: 2, value: c.judge, onchange: e => { c.judge = e.target.value; saveCfg(); } }))))));
+}
+
+/* ---------- running ---------- */
+async function run() {
+  if (S.running || !S.status) return;
+  const used = S.prompts.filter(p => !S.cfg.off.includes(p.name));
+  if (!used.length) return toast(t("needPrompt"), true);
+  if (!S.inputs.length) return toast(t("needCase"), true);
+  if (!S.cfg.models.length) return toast(t("needModel"), true);
+  await saveNow();
+  const c = S.cfg;
+  const body = {
+    prompts: used.map(p => p.name), models: c.models, provider: c.provider,
+    temperature: c.temperature === "" ? null : parseFloat(c.temperature),
+    repeat: Math.max(1, parseInt(c.repeat, 10) || 1), max_tokens: parseInt(c.max_tokens, 10) || 512,
+    judge: (c.judge || "").trim() || null, system: (c.system || "").trim() || null
+  };
+  S.running = true; S.ctrl = new AbortController(); S.plan = null;
+  S.R = { id: null, results: [], votes: {}, settings: body };
+  setTab("results"); renderRunButton(); renderResults();
+  try {
+    const res = await fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: S.ctrl.signal });
+    if (!res.ok) { let m = res.statusText; try { m = (await res.json()).error || m; } catch (e) {} throw new Error(m); }
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (line) handleEvent(JSON.parse(line));
+      }
+    }
+  } catch (e) { if (e.name !== "AbortError") toast(e.message, true); }
+  finally { S.running = false; S.ctrl = null; renderRunButton(); renderResults(); loadRuns(); }
+}
+let rafPending = false;
+function handleEvent(ev) {
+  if (ev.type === "start") { S.plan = ev; S.R.id = ev.id; S.R.created = ev.created; renderResults(); }
+  else if (ev.type === "result") {
+    S.R.results.push(ev.result);
+    if (!rafPending) { rafPending = true; requestAnimationFrame(() => { rafPending = false; renderResults(); }); }
+  } else if (ev.type === "error") toast(ev.message, true);
+}
+
+/* ---------- results tab ---------- */
+function summarize(R, variants) {
+  const out = {};
+  variants.forEach(v => out[v] = { n: 0, checked: 0, passed: 0, secs: 0, words: 0, tokens: 0, errors: 0, scores: [], wins: 0 });
+  for (const r of R.results) {
+    const s = out[r.variant]; if (!s) continue;
+    s.n++; s.secs += r.seconds; s.words += r.words || 0; s.tokens += (r.input_tokens || 0) + (r.output_tokens || 0);
+    if (r.error) s.errors++;
+    if (r.passed != null) { s.checked++; if (r.passed) s.passed++; }
+    if (r.score != null) s.scores.push(r.score);
+  }
+  for (const v of Object.values(R.votes || {})) if (out[v]) out[v].wins++;
+  return out;
+}
+function stabilityOf(R, variant) {
+  // cheap word-overlap (Jaccard) between repeated outputs of the same case; 1 = always the same wording
+  const by = {};
+  for (const r of R.results) if (r.variant === variant && !r.error) (by[r.input] = by[r.input] || []).push(new Set(r.output.toLowerCase().split(/\s+/).filter(Boolean)));
+  const vals = [];
+  for (const sets of Object.values(by)) for (let i = 0; i < sets.length; i++) for (let j = i + 1; j < sets.length; j++) {
+    const a = sets[i], b = sets[j]; let inter = 0; a.forEach(w => { if (b.has(w)) inter++; });
+    const uni = a.size + b.size - inter; vals.push(uni ? inter / uni : 1);
+  }
+  return vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null;
+}
+function structure(R) {
+  if (S.plan && R === S.R) return { variants: S.plan.variants.map(v => v.label), inputs: S.plan.inputs };
+  const variants = [], inputs = [];
+  for (const r of R.results) { if (!variants.includes(r.variant)) variants.push(r.variant); if (!inputs.includes(r.input)) inputs.push(r.input); }
+  return { variants, inputs };
+}
+function badge(r) {
+  if (r.error) return h("span", { class: "badge error" }, "ERROR");
+  if (r.passed == null) return null;
+  return h("span", { class: "badge " + (r.passed ? "pass" : "fail") }, r.passed ? "PASS" : "FAIL");
+}
+function renderResults() {
+  const root = $("#tab-results"); root.replaceChildren();
+  const R = S.R;
+  if (!R) { root.append(h("p", { class: "empty" }, t("noRun"))); return; }
+  const { variants, inputs } = structure(R);
+  const total = S.plan && R === S.R ? S.plan.total : R.results.length;
+  const canVote = !!R.id && !S.running;
+
+  if (S.running) root.append(h("div", { class: "progress", title: t("running") }, h("i", { style: `width:${total ? Math.round(100 * R.results.length / total) : 0}%` })));
+  const sums = summarize(R, variants), keyOf = v => [sums[v].wins, sums[v].checked ? sums[v].passed / sums[v].checked : 0];
+  let best = null;
+  if (variants.length > 1 && !S.running) {
+    const ranked = [...variants].sort((a, b) => { const A = keyOf(a), B = keyOf(b); return (B[0] - A[0]) || (B[1] - A[1]); });
+    const A = keyOf(ranked[0]), B = keyOf(ranked[1]);
+    if ((A[0] > B[0] || A[1] > B[1]) && (A[0] > 0 || A[1] > 0)) best = ranked[0];
+  }
+  root.append(h("div", { class: "sums" }, variants.map(v => {
+    const s = sums[v], n = s.n || 1;
+    const row = (k, val) => [h("dt", {}, k), h("dd", {}, val)];
+    return h("div", { class: "sum" + (v === best ? " best" : "") }, h("h3", {}, (v === best ? "★ " : "") + v, v === best ? h("span", { class: "pill" }, t("bestHint")) : null),
+      h("dl", {},
+        s.checked ? row(t("passRate"), `${s.passed}/${s.checked}`) : null,
+        Object.keys(R.votes || {}).length ? row(t("wins"), s.wins) : null,
+        s.scores.length ? row(t("score"), (s.scores.reduce((a, b) => a + b, 0) / s.scores.length).toFixed(1)) : null,
+        row(t("avgTime"), (s.secs / n).toFixed(1) + "s"), row(t("avgWords"), Math.round(s.words / n)),
+        stabilityOf(R, v) != null ? row(t("stability"), Math.round(stabilityOf(R, v) * 100) + "%") : null,
+        row(t("tokens"), s.tokens), s.errors ? row(t("errors"), s.errors) : null));
+  })));
+
+  const tools = h("div", { class: "tools" });
+  if (R.id && !S.running) {
+    tools.append(h("a", { href: `/api/runs/${R.id}/export?fmt=csv` }, "⬇ CSV"), h("a", { href: `/api/runs/${R.id}/export?fmt=html` }, "⬇ HTML"));
+    if (R.complete === false) tools.append(h("span", { class: "pill" }, t("partial")));
+    if (variants.length > 1) tools.append(h("span", { class: "dim" }, t("pickHint")));
+  }
+  root.append(tools);
+
+  const rows = {};
+  for (const r of R.results) { ((rows[r.input] = rows[r.input] || {})[r.variant] = (rows[r.input][r.variant] || [])).push(r); }
+  const multi = (R.settings && R.settings.repeat > 1);
+  const tbody = h("tbody", {});
+  for (const name of inputs) {
+    const tr = h("tr", {}, h("th", { class: "row" }, name));
+    for (const v of variants) {
+      const rs = ((rows[name] || {})[v] || []).sort((a, b) => a.rep - b.rep);
+      if (!rs.length) { tr.append(h("td", { class: "pending" }, S.running ? "…" : "–")); continue; }
+      const win = (R.votes || {})[name] === v;
+      tr.append(h("td", { class: win ? "win" : "" },
+        rs.map(r => h("div", { class: "out" },
+          h("div", { class: "meta" }, multi ? h("b", {}, "#" + (r.rep + 1)) : null, badge(r),
+            r.score != null ? h("span", { class: "badge" }, "★ " + r.score) : null,
+            h("span", {}, `${r.seconds}s · ${r.words} ${t("words")}`)),
+          h("pre", {}, r.error ? "ERROR: " + r.error : r.output),
+          (r.failed_checks || []).map(f => h("div", { class: "why" }, "! " + f)))),
+        variants.length > 1 ? h("button", { class: "vote" + (win ? " on" : ""), disabled: !canVote, onclick: () => vote(name, v) }, "🏆 " + t("best")) : null));
+    }
+    tbody.append(tr);
+  }
+  root.append(h("div", { class: "wrap" }, h("table", { class: "grid" },
+    h("thead", {}, h("tr", {}, h("th", {}, t("input")), variants.map(v => h("th", {}, v)))), tbody)));
+}
+async function vote(input, variant) {
+  const R = S.R, next = (R.votes || {})[input] === variant ? null : variant;
+  try {
+    await api(`/api/runs/${R.id}/vote`, { method: "POST", body: { input, variant: next } });
+    R.votes = R.votes || {};
+    if (next) R.votes[input] = next; else delete R.votes[input];
+    renderResults();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ---------- history tab ---------- */
+async function loadRuns() {
+  try { S.runs = await getJSON("/api/runs"); } catch (e) { S.runs = []; }
+  renderHistory();
+}
+function renderHistory() {
+  const root = $("#tab-history"); root.replaceChildren();
+  if (!S.runs.length) { root.append(h("p", { class: "empty" }, t("noHistory"))); return; }
+  root.append(h("table", { class: "hist" },
+    h("thead", {}, h("tr", {}, h("th", {}, t("date")), h("th", {}, t("variants")), h("th", {}, t("count")), h("th", {}, t("passRate")), h("th", {}))),
+    h("tbody", {}, S.runs.map(r => h("tr", {},
+      h("td", {}, (r.created || r.id).replace("T", " ")), h("td", {}, r.variants.join(", ")), h("td", {}, r.count),
+      h("td", {}, r.checked ? `${r.passed}/${r.checked}` : "–"),
+      h("td", {}, h("button", { class: "link", onclick: () => openRun(r.id) }, t("open")),
+        h("a", { class: "link", href: `/api/runs/${r.id}/export?fmt=csv` }, "CSV")))))));
+}
+async function openRun(id) {
+  try { S.R = await getJSON("/api/runs/" + id); S.plan = null; setTab("results"); renderResults(); }
+  catch (e) { toast(e.message, true); }
+}
+
+/* ---------- boot ---------- */
+async function loadProject() {
+  const p = await getJSON("/api/project");
+  S.prompts = p.prompts; S.inputs = p.inputs;
+  if (p.warning) toast(p.warning, true);
+}
+function renderAll() { applyLang(); renderStatus(); renderRunButton(); if (S.status) { renderEdit(); renderResults(); renderHistory(); } }
+(async function init() {
+  loadCfg(); applyLang();
+  try {
+    S.status = await getJSON("/api/status");
+    await loadProject();
+  } catch (e) { toast(e.message, true); return; }
+  ensureModels(); renderAll(); setTab("edit"); loadRuns();
+})();
+</script>
+</body>
+</html>
